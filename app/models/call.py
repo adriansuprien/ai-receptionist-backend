@@ -1,13 +1,15 @@
-from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy.sql import func
 from app.db.database import Base
 
 class Call(Base):
     __tablename__ = "calls"
 
-    id = Column(Integer, primary_key=True, index=True)
-    call_id = Column(String, index=True)
+    id            = Column(Integer, primary_key=True, index=True)
+    call_id       = Column(String, index=True)
     customer_name = Column(String)
-    phone_number = Column(String)
-    duration = Column(Float)
-    transcript = Column(String)
-    status = Column(String)
+    phone_number  = Column(String)
+    duration      = Column(Float)
+    transcript    = Column(String)
+    status        = Column(String)
+    created_at    = Column(DateTime, server_default=func.now())
