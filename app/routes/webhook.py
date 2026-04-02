@@ -18,7 +18,7 @@ async def retell_webhook(request: Request):
     event = data.get("event")
     call_data = data.get("call", {})
 
-    if event != "call_ended":
+    if False:
         return {"status": "ignored"}
 
     call_id = call_data.get("call_id")
