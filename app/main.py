@@ -1,13 +1,15 @@
 from fastapi import FastAPI
-from app.routes import webhook, dashboard
+from app.routes.webhook import router as webhook_router
+from app.routes.dashboard import router as dashboard_router
 from app.db.database import Base, engine
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-app.include_router(webhook.router)
-app.include_router(dashboard.router)
+# explicitly mount routes
+app.include_router(webhook_router)
+app.include_router(dashboard_router)
 
 @app.get("/")
 def root():
