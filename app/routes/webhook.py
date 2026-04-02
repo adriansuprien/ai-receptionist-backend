@@ -4,16 +4,20 @@ from app.models.call import Call
 
 router = APIRouter()
 
-@router.post("/retell-webhook")
+@router.api_route("/retell-webhook", methods=["GET", "POST"])
 async def retell_webhook(request: Request):
-    data = await request.json()
+    print("🔥 WEBHOOK HIT")
 
-    print("🔥 INCOMING WEBHOOK:", data)
+    try:
+        data = await request.json()
+    except:
+        data = {}
+
+    print("🔥 DATA:", data)
 
     event = data.get("event")
     call_data = data.get("call", {})
 
-    # 🚨 ONLY SAVE WHEN CALL ENDS
     if event != "call_ended":
         return {"status": "ignored"}
 
