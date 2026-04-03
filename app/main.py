@@ -4,6 +4,7 @@ from app.routes.webhook import router as webhook_router
 from app.routes.dashboard import router as dashboard_router
 from app.db.database import Base, engine
 
+Base.metadata.drop_all(bind=engine)   # TEMP: remove after confirming on Render
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -22,3 +23,5 @@ app.include_router(dashboard_router)
 @app.get("/")
 def root():
     return {"message": "AI Receptionist Backend Running"}
+
+#test push
