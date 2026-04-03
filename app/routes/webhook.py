@@ -1,20 +1,20 @@
-from fastapi import FastAPI, Request
+from fastapi import APIRouter, Request
 from openai import OpenAI
 import os
 
 from app.db.database import SessionLocal
 from app.models.call import Call
 
-app = FastAPI()
+router = APIRouter()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-@app.post("/webhook")
+@router.post("/webhook")
 async def webhook(request: Request):
     print("🔥 WEBHOOK HIT")
 
     try:
         data = await request.json()
-    except:
+    except Exception:
         data = {}
 
     print("🔥 DATA:", data)
