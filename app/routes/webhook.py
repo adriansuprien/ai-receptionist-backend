@@ -46,13 +46,18 @@ async def webhook(request: Request):
 
     print("🔥 DATA:", data)
 
-    # VAPI payload fields
-    transcript    = data.get("text", "") or data.get("transcript", "")
-    call_id       = data.get("call", {}).get("id", "") if isinstance(data.get("call"), dict) else data.get("call_id", "")
-    phone_number  = data.get("call", {}).get("customer", {}).get("number", "") if isinstance(data.get("call"), dict) else data.get("phone_number", "")
-    customer_name = data.get("call", {}).get("customer", {}).get("name", "") if isinstance(data.get("call"), dict) else data.get("customer_name", "")
-    duration      = data.get("call", {}).get("duration", 0) if isinstance(data.get("call"), dict) else data.get("duration", 0)
-    status        = data.get("call", {}).get("status", "completed") if isinstance(data.get("call"), dict) else data.get("status", "completed")
+    message = data.get("message", {})
+    message_type = message.get("type", "")
+
+    if message_type != "end-of-call-report":
+        print(f"⏭️ Ignoring event type: {message_type}")
+        return {"status": "ignored"}
+
+    transcript    = message.get("transcript", "")
+    duration      = message.get("durationSeconds", 0)
+    call_id       = message.get("call", {}).get("id", "")
+    phone_number  = message.get("call", {}).get("customer", {}).get("number", "")
+    customer_name = message.get("call", {}).get("customer", {}).get("name", "")
 
     order_summary = extract_order_summary(transcript)
 
@@ -64,7 +69,7 @@ async def webhook(request: Request):
             phone_number=phone_number,
             duration=duration,
             transcript=transcript,
-            status=status,
+            status="completed",
             order_summary=order_summary,
         )
         db.add(call)
@@ -76,4 +81,4 @@ async def webhook(request: Request):
     finally:
         db.close()
 
-    return {"response": "Thank you for calling Punjab Halal Meat & Grill. Your order has been received!"}
+    return {"status": "ok"}
