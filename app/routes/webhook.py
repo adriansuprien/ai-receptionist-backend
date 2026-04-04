@@ -44,7 +44,7 @@ async def webhook(request: Request):
     except Exception:
         data = {}
 
-    print("🔥 DATA:", data)
+    #print("🔥 DATA:", data)
 
     message = data.get("message", {})
     message_type = message.get("type", "")
