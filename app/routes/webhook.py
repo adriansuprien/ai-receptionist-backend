@@ -51,7 +51,7 @@ async def webhook(request: Request):
 
     if message_type != "end-of-call-report":
         print(f"⏭️ Ignoring event type: {message_type}")
-        return {"status": "ignored"}
+        return {"response": "ok"}
 
     transcript    = message.get("transcript", "")
     duration      = message.get("durationSeconds", 0)
@@ -81,4 +81,4 @@ async def webhook(request: Request):
     finally:
         db.close()
 
-    return {"status": "ok"}
+    return {"response": "ok"}
