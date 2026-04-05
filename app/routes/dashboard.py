@@ -1,12 +1,30 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import pytz
+import re
 from app.db.database import SessionLocal
 from app.models.call import Call
 
 eastern = pytz.timezone("US/Eastern")
 
 router = APIRouter()
+
+
+def to_eastern(dt):
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        dt = pytz.utc.localize(dt)
+    return dt.astimezone(eastern).isoformat()
+
+
+def extract_name_from_summary(order_summary: str) -> str:
+    if not order_summary:
+        return ""
+    match = re.search(r"(?:Customer Name|Customer)\s*:\s*(.+)", order_summary, re.IGNORECASE)
+    if match:
+        return match.group(1).split("\n")[0].strip()
+    return ""
 
 # In-memory settings store (replace with DB-backed if needed)
 _settings = {
@@ -33,14 +51,14 @@ def get_calls():
         {
             "id":            c.id,
             "call_id":       c.call_id,
-            "customer_name": c.customer_name,
+            "customer_name": c.customer_name or extract_name_from_summary(c.order_summary),
             "phone_number":  c.phone_number,
             "duration":      round(c.duration / 60, 1) if c.duration else 0,
             "transcript":    c.transcript,
             "status":        c.status,
             "order_summary": c.order_summary,
             "order_status":  c.order_status or "new",
-            "created_at":    pytz.utc.localize(c.created_at).astimezone(eastern).isoformat() if c.created_at else None,
+            "created_at":    to_eastern(c.created_at),
         }
         for c in calls
     ]
