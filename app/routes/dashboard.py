@@ -1,7 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+import pytz
 from app.db.database import SessionLocal
 from app.models.call import Call
+
+eastern = pytz.timezone("US/Eastern")
 
 router = APIRouter()
 
@@ -37,7 +40,7 @@ def get_calls():
             "status":        c.status,
             "order_summary": c.order_summary,
             "order_status":  c.order_status,
-            "created_at":    c.created_at.isoformat() if c.created_at else None,
+            "created_at":    pytz.utc.localize(c.created_at).astimezone(eastern).isoformat() if c.created_at else None,
         }
         for c in calls
     ]
