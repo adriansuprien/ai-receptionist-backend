@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes.webhook import router as webhook_router
 from app.routes.dashboard import router as dashboard_router
+from app.db.database import Base, engine
 
 Base.metadata.create_all(bind=engine)
 
