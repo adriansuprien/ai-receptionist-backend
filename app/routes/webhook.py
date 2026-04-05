@@ -52,6 +52,7 @@ async def webhook(request: Request):
     duration      = message.get("durationSeconds", 0)
     call_id       = message.get("call", {}).get("id", "")
     phone_number  = message.get("call", {}).get("customer", {}).get("number", "")
+    phone_number  = "".join(c for c in phone_number if c.isdigit() or c == "+")
     customer_name = message.get("call", {}).get("customer", {}).get("name", "")
 
     order_summary = extract_order_summary(transcript)
