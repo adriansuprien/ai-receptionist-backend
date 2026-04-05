@@ -39,7 +39,7 @@ def get_calls():
             "transcript":    c.transcript,
             "status":        c.status,
             "order_summary": c.order_summary,
-            "order_status":  c.order_status,
+            "order_status":  c.order_status or "new",
             "created_at":    pytz.utc.localize(c.created_at).astimezone(eastern).isoformat() if c.created_at else None,
         }
         for c in calls
