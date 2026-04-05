@@ -1,37 +1,34 @@
 from fastapi import APIRouter, Request
-from openai import OpenAI
+import anthropic
 import os
 
 from app.db.database import SessionLocal
 from app.models.call import Call
 
 router = APIRouter()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 
 def extract_order_summary(transcript: str) -> str:
     if not transcript:
         return ""
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=200,
+            system=(
+                "You are a helpful assistant for Punjab Halal Meat & Grill. "
+                "Extract a concise order summary from the call transcript. "
+                "Include: items ordered, quantities, any special requests, and customer name if mentioned. "
+                "If no order was placed, summarize the purpose of the call in one sentence."
+            ),
             messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a helpful assistant for Punjab Halal Meat & Grill. "
-                        "Extract a concise order summary from the call transcript. "
-                        "Include: items ordered, quantities, any special requests, and customer name if mentioned. "
-                        "If no order was placed, summarize the purpose of the call in one sentence."
-                    ),
-                },
                 {"role": "user", "content": transcript},
             ],
-            max_tokens=200,
         )
-        return response.choices[0].message.content.strip()
+        return response.content[0].text.strip()
     except Exception as e:
-        print(f"OpenAI error: {e}")
+        print(f"Anthropic error: {e}")
         return ""
 
 
@@ -43,8 +40,6 @@ async def webhook(request: Request):
         data = await request.json()
     except Exception:
         data = {}
-
-    #print("🔥 DATA:", data)
 
     message = data.get("message", {})
     message_type = message.get("type", "")
