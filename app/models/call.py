@@ -13,4 +13,5 @@ class Call(Base):
     transcript    = Column(String)
     status        = Column(String)
     order_summary = Column(String)
+    order_status  = Column(String, default="new")
     created_at    = Column(DateTime, server_default=func.now())

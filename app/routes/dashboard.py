@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from app.db.database import SessionLocal
 from app.models.call import Call
@@ -36,6 +36,7 @@ def get_calls():
             "transcript":    c.transcript,
             "status":        c.status,
             "order_summary": c.order_summary,
+            "order_status":  c.order_status,
             "created_at":    c.created_at.isoformat() if c.created_at else None,
         }
         for c in calls
@@ -59,6 +60,26 @@ def get_analytics():
 @router.get("/settings")
 def get_settings():
     return _settings
+
+
+class OrderStatusUpdate(BaseModel):
+    status: str
+
+
+@router.patch("/calls/{call_id}/status")
+def update_order_status(call_id: int, body: OrderStatusUpdate):
+    if body.status not in ("new", "completed"):
+        raise HTTPException(status_code=400, detail="status must be 'new' or 'completed'")
+    db = SessionLocal()
+    try:
+        call = db.query(Call).filter(Call.id == call_id).first()
+        if not call:
+            raise HTTPException(status_code=404, detail="Call not found")
+        call.order_status = body.status
+        db.commit()
+        return {"id": call_id, "order_status": call.order_status}
+    finally:
+        db.close()
 
 
 @router.post("/settings")
