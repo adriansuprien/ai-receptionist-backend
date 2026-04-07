@@ -102,6 +102,27 @@ def update_order_status(call_id: int, body: OrderStatusUpdate):
     finally:
         db.close()
 
+@router.get("/fix-orders")
+def fix_orders():
+    db = SessionLocal()
+    calls = db.query(Call).all()
+    fixed = 0
+    no_order_phrases = [
+        "no order", "no order placed", "no order was placed",
+        "did not place", "didn't place", "only shows the greeting",
+        "no items were ordered", "no order completed",
+        "no food", "no purchase", "only the greeting",
+        "conversation only shows"
+    ]
+    for call in calls:
+        summary = (call.order_summary or "").lower()
+        if any(p in summary for p in no_order_phrases):
+            call.order_status = "inquiry"
+            fixed += 1
+    db.commit()
+    db.close()
+    return {"fixed": fixed}
+
 
 @router.post("/settings")
 def save_settings(settings: Settings):
