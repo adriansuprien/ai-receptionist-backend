@@ -4,6 +4,7 @@ import pytz
 import re
 from app.db.database import SessionLocal
 from app.models.call import Call
+from app.models.settings import Settings as SettingsModel
 
 eastern = pytz.timezone("US/Eastern")
 
@@ -26,20 +27,16 @@ def extract_name_from_summary(order_summary: str) -> str:
         return match.group(1).split("\n")[0].strip()
     return ""
 
-# In-memory settings store (replace with DB-backed if needed)
-_settings = {
-    "restaurantName": "Punjab Halal Meat & Grill",
-    "phoneNumber": "",
-    "openingHours": "",
-    "greeting": "",
-}
-
-
-class Settings(BaseModel):
+class SettingsSchema(BaseModel):
     restaurantName: str = ""
     phoneNumber: str = ""
     openingHours: str = ""
     greeting: str = ""
+    forwardNumber: str = ""
+    openTime: str = "09:00"
+    closeTime: str = "17:00"
+    takeOrders: str = "true"
+    bookAppointments: str = "false"
 
 
 @router.get("/calls")
@@ -80,7 +77,24 @@ def get_analytics():
 
 @router.get("/settings")
 def get_settings():
-    return _settings
+    db = SessionLocal()
+    try:
+        row = db.query(SettingsModel).filter(SettingsModel.id == 1).first()
+        if not row:
+            return SettingsSchema().model_dump()
+        return SettingsSchema(
+            restaurantName=row.restaurantName or "",
+            phoneNumber=row.phoneNumber or "",
+            openingHours=row.openingHours or "",
+            greeting=row.greeting or "",
+            forwardNumber=row.forwardNumber or "",
+            openTime=row.openTime or "09:00",
+            closeTime=row.closeTime or "17:00",
+            takeOrders=row.takeOrders or "true",
+            bookAppointments=row.bookAppointments or "false",
+        ).model_dump()
+    finally:
+        db.close()
 
 
 class OrderStatusUpdate(BaseModel):
@@ -104,6 +118,16 @@ def update_order_status(call_id: int, body: OrderStatusUpdate):
 
 
 @router.post("/settings")
-def save_settings(settings: Settings):
-    _settings.update(settings.model_dump())
-    return {"message": "Settings saved", "settings": _settings}
+def save_settings(settings: SettingsSchema):
+    db = SessionLocal()
+    try:
+        row = db.query(SettingsModel).filter(SettingsModel.id == 1).first()
+        if not row:
+            row = SettingsModel(id=1)
+            db.add(row)
+        for key, val in settings.model_dump().items():
+            setattr(row, key, val)
+        db.commit()
+        return {"message": "Settings saved", "settings": settings.model_dump()}
+    finally:
+        db.close()

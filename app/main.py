@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routes.webhook import router as webhook_router
 from app.routes.dashboard import router as dashboard_router
 from app.db.database import Base, engine
+import app.models.settings  # noqa: F401 — ensures Settings table is created
 
 Base.metadata.create_all(bind=engine)
 
