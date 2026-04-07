@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Request
 import anthropic
+import re
 import os
 
 from app.db.database import SessionLocal
@@ -7,6 +8,22 @@ from app.models.call import Call
 
 router = APIRouter()
 client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+
+FOOD_KEYWORDS = [
+    "chicken", "lamb", "beef", "rice", "gyro", "platter", "combo",
+    "falafel", "shawarma", "burger", "wrap", "kebab", "naan", "biryani",
+]
+
+
+def is_food_order(summary: str) -> bool:
+    if not summary:
+        return False
+    text = summary.lower()
+    if any(kw in text for kw in FOOD_KEYWORDS):
+        return True
+    if re.search(r"\b\d+\s+[a-z]+", text):
+        return True
+    return False
 
 
 def extract_order_summary(transcript: str) -> str:
@@ -56,6 +73,7 @@ async def webhook(request: Request):
     customer_name = message.get("call", {}).get("customer", {}).get("name", "")
 
     order_summary = extract_order_summary(transcript)
+    order_status  = "new" if is_food_order(order_summary) else "inquiry"
 
     db = SessionLocal()
     try:
@@ -67,10 +85,11 @@ async def webhook(request: Request):
             transcript=transcript,
             status="completed",
             order_summary=order_summary,
+            order_status=order_status,
         )
         db.add(call)
         db.commit()
-        print(f"✅ Call saved: {call_id}, order: {order_summary}")
+        print(f"✅ Call saved: {call_id}, is_order={order_status}, summary: {order_summary}")
     except Exception as e:
         db.rollback()
         print(f"❌ DB error: {e}")
