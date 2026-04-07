@@ -15,16 +15,19 @@ FOOD_KEYWORDS = [
 ]
 
 
+CONFIRMATION_KEYWORDS = [
+    "confirmed", "placed", "ordered", "will have ready", "pickup at",
+    "order placed", "ready at", "be ready", "your order", "got it", "sounds good",
+]
+
+
 def is_food_order(summary: str) -> bool:
     if not summary:
         return False
     text = summary.lower()
-    if any(kw in text for kw in FOOD_KEYWORDS):
-        return True
-    if re.search(r"\b\d+\s+[a-z]+", text):
-        return True
-    return False
-
+    has_food = any(kw in text for kw in FOOD_KEYWORDS)
+    has_confirmation = any(kw in text for kw in CONFIRMATION_KEYWORDS)
+    return has_food and has_confirmation
 
 def extract_order_summary(transcript: str) -> str:
     if not transcript:
