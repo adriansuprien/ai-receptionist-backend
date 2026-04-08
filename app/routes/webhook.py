@@ -15,19 +15,14 @@ FOOD_KEYWORDS = [
 ]
 
 
-CONFIRMATION_KEYWORDS = [
-    "confirmed", "placed", "ordered", "will have ready", "pickup at",
-    "order placed", "ready at", "be ready", "your order", "got it", "sounds good",
-]
-
-
 def is_food_order(summary: str) -> bool:
     if not summary:
         return False
     text = summary.lower()
     has_food = any(kw in text for kw in FOOD_KEYWORDS)
-    has_confirmation = any(kw in text for kw in CONFIRMATION_KEYWORDS)
+    has_confirmation = "order confirmed:** yes" in text or "order confirmed: yes" in text
     return has_food and has_confirmation
+
 
 def extract_order_summary(transcript: str) -> str:
     if not transcript:
@@ -35,12 +30,19 @@ def extract_order_summary(transcript: str) -> str:
     try:
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
-            max_tokens=200,
+            max_tokens=400,
             system=(
-                "You are a helpful assistant for Punjab Halal Meat & Grill. "
-                "Extract a concise order summary from the call transcript. "
-                "Include: items ordered, quantities, any special requests, and customer name if mentioned. "
-                "If no order was placed, summarize the purpose of the call in one sentence."
+                "You are a data extraction assistant for Punjab Halal Meat & Grill. "
+                "Analyze the call transcript and respond in this exact format:\n\n"
+                "**ORDER SUMMARY**\n\n"
+                "**Items Ordered:** [list items and quantities, or 'None']\n"
+                "**Customer Name:** [name or 'Not provided']\n"
+                "**Phone Number:** [number or 'Not provided']\n"
+                "**Special Requests:** [or 'None mentioned']\n"
+                "**Pickup Time:** [time or 'Not specified']\n"
+                "**Order Confirmed:** [YES or NO]\n"
+                "**Call Purpose:** [one sentence description]\n\n"
+                "Only mark Order Confirmed as YES if the customer explicitly confirmed or agreed to place the order."
             ),
             messages=[
                 {"role": "user", "content": transcript},
